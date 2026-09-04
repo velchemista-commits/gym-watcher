@@ -1,0 +1,17 @@
+# 監視対象の設定
+target:
+  municipality: ome           # 青梅市
+  mokuteki_code: "037"        # バレーボール
+  reservation_url: "https://k4.p-kashikan.jp/ome-city/index.php"
+  # 同一施設・同一日でこの枠数以上連続して空いている場合のみ通知する
+  # (1日は 9-12/12-13/13-15/15-17/17-19/19-21 の6枠に分かれている)
+  min_consecutive_blocks: 3
+
+# 対象曜日: 土日祝のみ空きをチェックする
+target_weekdays:
+  saturday: true
+  sunday: true
+  holiday: true
+
+# 何日先まで空き状況をチェックするか
+lookahead_days: 60

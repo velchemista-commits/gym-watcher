@@ -1,0 +1,53 @@
+name: Check gym availability
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    # JST 6:00-23:00 を1時間おき (cronはUTC基準なのでUTC 21:00-14:00 相当を分割指定)
+    # Playwright(ブラウザ自動化)を使うため1回の実行に1〜2分かかる。
+    # プライベートリポジトリのActions無料枠(月2000分)を考慮してこの頻度にしている。
+    # パブリックリポジトリならGitHub Actionsは無料枠無制限なので、頻度を上げても良い。
+    - cron: "0 21-23 * * *"
+    - cron: "0 0-14 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gym-watcher-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Playwright browser
+        run: python -m playwright install --with-deps chromium
+
+      - name: Run availability check
+        env:
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          NOTIFY_TO: ${{ secrets.NOTIFY_TO }}
+        run: python main.py
+
+      - name: Commit updated state
+        run: |
+          git config user.name "gym-watcher-bot"
+          git config user.email "actions@users.noreply.github.com"
+          if ! git diff --quiet -- state.json; then
+            git add state.json
+            git commit -m "chore: update availability state"
+            git push
+          else
+            echo "No state changes"
+          fi

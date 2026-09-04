@@ -1,0 +1,5 @@
+beautifulsoup4>=4.12
+pyyaml>=6.0
+jpholiday>=0.1.9
+tzdata>=2024.1
+playwright>=1.40
