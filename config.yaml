@@ -2,6 +2,7 @@
 # min_consecutive_blocks:       この枠数以上連続して空いている場合に通知
 # always_notify_block_indexes:  1枠だけでも通知したい枠(0始まりの番号)
 # facility_filters:             施設名にこの文字列を含む施設だけを対象にする(省略時は全施設)
+# facility_excludes:            施設名にこの文字列を含む施設を対象から除外する(facility_filtersと併用可)
 targets:
   - municipality: ome
     name: 青梅市
@@ -10,6 +11,8 @@ targets:
     # 1日6枠: 9-12 / 12-13 / 13-15 / 15-17 / 17-19 / 19-21
     min_consecutive_blocks: 3
     always_notify_block_indexes: []
+    # 天ヶ瀬体育館は分割面(1/2A・1/2B)を除外し、全面のみ通知する
+    facility_excludes: ["瀬体育館1/2"]
 
   - municipality: koto
     name: 江東区
@@ -36,6 +39,22 @@ targets:
     # 対象は 奥戸体育館の大体育室全面 / エイトホール / 水元のメインアリーナ全面
     min_consecutive_blocks: 2
     always_notify_block_indexes: []
+
+  - municipality: adachi
+    name: 足立区
+    reservation_url: "https://k5.p-kashikan.jp/adachi-ku/"
+    sport_code: "021"             # バレーボール
+    # 1日4枠: 9-12 / 12:30-15 / 15:30-18 / 18:30-21
+    min_consecutive_blocks: 2
+    always_notify_block_indexes: []
+    # バレーボール2面以上使える館の「全面」のみ(半面A/半面B等の分割面は除外)
+    facility_filters:
+      - "中央本町地域学習センター 体育館 全面"
+      - "東和地域学習センター 体育館 全面"
+      - "江北地域学習センター 体育館 全面"
+      - "鹿浜地域学習センター 体育館 全面"
+      - "梅田地域学習センター 体育館 全面"
+      - "総合スポーツセンター 大体育室　全面"
 
   - municipality: matsudo
     name: 松戸市

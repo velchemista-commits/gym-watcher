@@ -15,7 +15,7 @@ from zoneinfo import ZoneInfo
 import jpholiday
 import yaml
 
-from scrapers import arakawa, ichikawa, katsushika, koto, matsudo, ome
+from scrapers import adachi, arakawa, ichikawa, katsushika, koto, matsudo, ome
 from scrapers.base import Slot
 
 SCRAPERS = {
@@ -25,6 +25,7 @@ SCRAPERS = {
     "ichikawa": ichikawa,
     "katsushika": katsushika,
     "matsudo": matsudo,
+    "adachi": adachi,
 }
 
 ROOT = Path(__file__).parent
@@ -110,6 +111,10 @@ def collect_current_slots(config: dict) -> list[Slot]:
             # 1自治体が落ちても他の自治体の通知は続ける
             print(f"{name}: 取得に失敗しました: {e}", file=sys.stderr)
             continue
+
+        excludes = target.get("facility_excludes", ())
+        if excludes:
+            slots = [s for s in slots if not any(x in s.facility for x in excludes)]
 
         print(f"{name}: {len(slots)}件", file=sys.stderr)
         all_slots.extend(slots)
