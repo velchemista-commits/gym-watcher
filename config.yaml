@@ -28,6 +28,15 @@ targets:
     always_notify_block_indexes: []
     facility_filters: ["大体育室全面", "小体育室"]   # 荒川総合スポーツセンターのみ
 
+  - municipality: ichikawa
+    name: 市川市
+    reservation_url: "https://reserve.city.ichikawa.lg.jp/"
+    sport_code: ""                # 種目指定のないシステムのため未使用
+    # 1日6枠(2時間単位): 9-11 / 11-13 / 13-15 / 15-17 / 17-19 / 19-21
+    # 対象は国府台・信篤の体育館のみ、かつ「全面」だけ(scrapers/ichikawa.py で指定)
+    min_consecutive_blocks: 2
+    always_notify_block_indexes: []
+
 # 対象曜日: 土日祝のみ空きをチェックする
 target_weekdays:
   saturday: true
