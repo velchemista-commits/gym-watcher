@@ -15,8 +15,10 @@ from zoneinfo import ZoneInfo
 import jpholiday
 import yaml
 
-from scrapers import ome
+from scrapers import koto, ome
 from scrapers.base import Slot
+
+SCRAPERS = {"ome": ome, "koto": koto}
 
 ROOT = Path(__file__).parent
 CONFIG_PATH = ROOT / "config.yaml"
@@ -78,16 +80,33 @@ def target_dates(config: dict) -> list[str]:
 
 
 def collect_current_slots(config: dict) -> list[Slot]:
-    target = config["target"]
-
-    if target["municipality"] != "ome":
-        raise NotImplementedError(f"未対応の自治体: {target['municipality']}")
-
     dates = target_dates(config)
-    min_consecutive = target.get("min_consecutive_blocks", ome.DEFAULT_MIN_CONSECUTIVE)
     print(f"対象日数: {len(dates)}日", file=sys.stderr)
 
-    return ome.fetch_all_slots(dates, target["mokuteki_code"], min_consecutive)
+    all_slots: list[Slot] = []
+    for target in config["targets"]:
+        key = target["municipality"]
+        scraper = SCRAPERS.get(key)
+        if scraper is None:
+            raise NotImplementedError(f"未対応の自治体: {key}")
+
+        name = target.get("name", key)
+        try:
+            slots = scraper.fetch_all_slots(
+                dates,
+                target["sport_code"],
+                target.get("min_consecutive_blocks", scraper.DEFAULT_MIN_CONSECUTIVE),
+                target.get("always_notify_block_indexes", scraper.DEFAULT_ALWAYS_NOTIFY_INDEXES),
+            )
+        except Exception as e:
+            # 1自治体が落ちても他の自治体の通知は続ける
+            print(f"{name}: 取得に失敗しました: {e}", file=sys.stderr)
+            continue
+
+        print(f"{name}: {len(slots)}件", file=sys.stderr)
+        all_slots.extend(slots)
+
+    return all_slots
 
 
 def main() -> None:
@@ -120,7 +139,8 @@ def main() -> None:
     if new_slots:
         from notifier import send_new_slot_email
 
-        send_new_slot_email(new_slots, config["target"]["reservation_url"])
+        urls = {t.get("name", t["municipality"]): t["reservation_url"] for t in config["targets"]}
+        send_new_slot_email(new_slots, urls)
         print("通知メールを送信しました", file=sys.stderr)
 
     save_state(current_keys)

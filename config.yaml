@@ -1,11 +1,22 @@
-# 監視対象の設定
-target:
-  municipality: ome           # 青梅市
-  mokuteki_code: "037"        # バレーボール
-  reservation_url: "https://k4.p-kashikan.jp/ome-city/index.php"
-  # 同一施設・同一日でこの枠数以上連続して空いている場合のみ通知する
-  # (1日は 9-12/12-13/13-15/15-17/17-19/19-21 の6枠に分かれている)
-  min_consecutive_blocks: 3
+# 監視対象の自治体一覧
+# min_consecutive_blocks:       この枠数以上連続して空いている場合に通知
+# always_notify_block_indexes:  1枠だけでも通知したい枠(0始まりの番号)
+targets:
+  - municipality: ome
+    name: 青梅市
+    reservation_url: "https://k4.p-kashikan.jp/ome-city/index.php"
+    sport_code: "037"             # バレーボール
+    # 1日6枠: 9-12 / 12-13 / 13-15 / 15-17 / 17-19 / 19-21
+    min_consecutive_blocks: 3
+    always_notify_block_indexes: []
+
+  - municipality: koto
+    name: 江東区
+    reservation_url: "https://yoyaku.koto-sports.net/"
+    sport_code: "2"               # バレーボール
+    # 1日3枠: 9-12 / 13-17 / 18-21:30
+    min_consecutive_blocks: 2
+    always_notify_block_indexes: [1]   # 13:00-17:00 は1枠でも通知
 
 # 対象曜日: 土日祝のみ空きをチェックする
 target_weekdays:

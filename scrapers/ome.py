@@ -23,8 +23,9 @@ from typing import Iterable, List, Optional
 from bs4 import BeautifulSoup
 from playwright.sync_api import Page, sync_playwright
 
-from .base import Slot
+from .base import Slot, build_time_label, find_qualifying_runs
 
+MUNICIPALITY = "青梅市"
 BASE_URL = "https://k4.p-kashikan.jp/ome-city/index.php"
 
 MOKUTEKI_VOLLEYBALL = "037"
@@ -45,6 +46,7 @@ TIME_BLOCK_STARTS = [label.split("-")[0] for label in TIME_BLOCK_LABELS]
 TIME_BLOCK_ENDS = [label.split("-")[1] for label in TIME_BLOCK_LABELS]
 
 DEFAULT_MIN_CONSECUTIVE = 3
+DEFAULT_ALWAYS_NOTIFY_INDEXES: tuple[int, ...] = ()
 
 _DATE_RE = re.compile(r"(\d{4}).*?年\s*(\d{1,2})月\s*(\d{1,2})日")
 
@@ -53,6 +55,7 @@ def fetch_all_slots(
     target_dates: Iterable[str],
     mokuteki_code: str = MOKUTEKI_VOLLEYBALL,
     min_consecutive: int = DEFAULT_MIN_CONSECUTIVE,
+    always_notify_indexes: Iterable[int] = DEFAULT_ALWAYS_NOTIFY_INDEXES,
 ) -> List[Slot]:
     """target_dates(YYYYMMDDの集合)に含まれる日だけ空き(○/●)スロットを取得する。
 
@@ -89,7 +92,11 @@ def fetch_all_slots(
             max_clicks = 400  # 無限ループ防止の安全弁
             while current is not None and current <= last_target and guard < max_clicks:
                 if current in target_set:
-                    slots.extend(_parse_slots(page.content(), current, min_consecutive))
+                    slots.extend(
+                        _parse_slots(
+                            page.content(), current, min_consecutive, always_notify_indexes
+                        )
+                    )
                 if current == last_target:
                     break
                 page.locator("text=1日後").first.click()
@@ -138,6 +145,7 @@ def _parse_slots(
     html: str,
     date_str: str,
     min_consecutive: int = DEFAULT_MIN_CONSECUTIVE,
+    always_notify_indexes: Iterable[int] = DEFAULT_ALWAYS_NOTIFY_INDEXES,
 ) -> List[Slot]:
     soup = BeautifulSoup(html, "html.parser")
     slots: List[Slot] = []
@@ -161,40 +169,18 @@ def _parse_slots(
             data_cells = table.select("td")[1:]
             available = [cell.get_text(strip=True) in AVAILABLE_MARKS for cell in data_cells]
 
-            for start_idx, end_idx in _consecutive_runs(available, min_consecutive):
-                label = _time_range_label(start_idx, end_idx)
-                slots.append(Slot(facility=facility, date=date_str, time_label=label))
+            for start_idx, end_idx in find_qualifying_runs(
+                available, min_consecutive, always_notify_indexes
+            ):
+                slots.append(
+                    Slot(
+                        municipality=MUNICIPALITY,
+                        facility=facility,
+                        date=date_str,
+                        time_label=build_time_label(
+                            TIME_BLOCK_STARTS, TIME_BLOCK_ENDS, start_idx, end_idx
+                        ),
+                    )
+                )
 
     return slots
-
-
-def _consecutive_runs(available: List[bool], min_consecutive: int) -> List[tuple[int, int]]:
-    """available(枠ごとのTrue/False)から、min_consecutive枠以上連続してTrueの
-    区間を (開始idx, 終了idx) のリストで返す(両端含む、区間は最大に伸ばす)。"""
-    runs: List[tuple[int, int]] = []
-    run_start: Optional[int] = None
-    for idx, is_available in enumerate(available):
-        if is_available:
-            if run_start is None:
-                run_start = idx
-        else:
-            if run_start is not None and idx - run_start >= min_consecutive:
-                runs.append((run_start, idx - 1))
-            run_start = None
-    if run_start is not None and len(available) - run_start >= min_consecutive:
-        runs.append((run_start, len(available) - 1))
-    return runs
-
-
-def _time_range_label(start_idx: int, end_idx: int) -> str:
-    start = (
-        TIME_BLOCK_STARTS[start_idx]
-        if start_idx < len(TIME_BLOCK_STARTS)
-        else f"枠{start_idx + 1}"
-    )
-    end = (
-        TIME_BLOCK_ENDS[end_idx]
-        if end_idx < len(TIME_BLOCK_ENDS)
-        else f"枠{end_idx + 1}"
-    )
-    return f"{start}-{end}"
