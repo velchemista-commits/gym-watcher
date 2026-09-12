@@ -3,12 +3,11 @@ name: Check gym availability
 on:
   workflow_dispatch: {}
   schedule:
-    # JST 6:00-23:00 を1時間おき (cronはUTC基準なのでUTC 21:00-14:00 相当を分割指定)
-    # Playwright(ブラウザ自動化)を使うため1回の実行に1〜2分かかる。
-    # プライベートリポジトリのActions無料枠(月2000分)を考慮してこの頻度にしている。
-    # パブリックリポジトリならGitHub Actionsは無料枠無制限なので、頻度を上げても良い。
-    - cron: "0 21-23 * * *"
-    - cron: "0 0-14 * * *"
+    # JST 6:00-23:00 を30分おき (cronはUTC基準なのでUTC 21:00-14:00 相当を分割指定)
+    # 2026年9月時点、7自治体のチェックに1回あたり11〜17分程度かかる。
+    # このリポジトリはパブリックのため、GitHub Actionsの無料枠は無制限。
+    - cron: "0,30 21-23 * * *"
+    - cron: "0,30 0-14 * * *"
 
 permissions:
   contents: write
