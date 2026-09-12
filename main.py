@@ -10,6 +10,7 @@ import json
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Callable, Optional
 from zoneinfo import ZoneInfo
 
 import jpholiday
@@ -87,7 +88,16 @@ def target_dates(config: dict) -> list[str]:
     return dates
 
 
-def collect_current_slots(config: dict) -> list[Slot]:
+def collect_current_slots(
+    config: dict,
+    on_target_done: Optional[Callable[[dict, list[Slot]], None]] = None,
+) -> list[Slot]:
+    """全自治体を順に確認する。
+
+    on_target_done を渡すと、1自治体分の取得が終わるたびに
+    (target設定, その自治体のスロット一覧) で呼び出される。自治体ごとに
+    確認でき次第すぐ通知したい場合はここでメール送信を行う。
+    """
     dates = target_dates(config)
     print(f"対象日数: {len(dates)}日", file=sys.stderr)
 
@@ -117,6 +127,8 @@ def collect_current_slots(config: dict) -> list[Slot]:
             slots = [s for s in slots if not any(x in s.facility for x in excludes)]
 
         print(f"{name}: {len(slots)}件", file=sys.stderr)
+        if on_target_done:
+            on_target_done(target, slots)
         all_slots.extend(slots)
 
     return all_slots
@@ -132,29 +144,40 @@ def main() -> None:
     args = parser.parse_args()
 
     config = load_config()
-    current_slots = collect_current_slots(config)
-    current_keys = {s.key() for s in current_slots}
-    key_to_slot = {s.key(): s for s in current_slots}
-
     previous_keys = load_state()
-    new_keys = current_keys - previous_keys
-    new_slots = [key_to_slot[k] for k in new_keys]
+    total_new = 0
 
-    print(f"現在の空き件数: {len(current_slots)}", file=sys.stderr)
-    print(f"新規に空きが出た件数: {len(new_slots)}", file=sys.stderr)
-    for s in sorted(new_slots, key=lambda s: (s.date, s.time_label)):
-        print(f"  NEW: {s.describe()}", file=sys.stderr)
+    def handle_target(target: dict, slots: list[Slot]) -> None:
+        nonlocal total_new
+        name = target.get("name", target["municipality"])
+        key_to_slot = {s.key(): s for s in slots}
+        new_keys = set(key_to_slot) - previous_keys
+        if not new_keys:
+            return
+
+        new_slots = [key_to_slot[k] for k in new_keys]
+        total_new += len(new_slots)
+        print(f"{name}: 新規に空きが出た件数: {len(new_slots)}", file=sys.stderr)
+        for s in sorted(new_slots, key=lambda s: (s.date, s.time_label)):
+            print(f"  NEW: {s.describe()}", file=sys.stderr)
+
+        if args.dry_run:
+            return
+
+        from notifier import send_new_slot_email
+
+        send_new_slot_email(new_slots, {name: target["reservation_url"]}, subject_prefix=name)
+        print(f"{name}: 通知メールを送信しました", file=sys.stderr)
+
+    current_slots = collect_current_slots(config, on_target_done=handle_target)
+    current_keys = {s.key() for s in current_slots}
+
+    print(f"現在の空き件数(合計): {len(current_slots)}", file=sys.stderr)
+    print(f"新規に空きが出た件数(合計): {total_new}", file=sys.stderr)
 
     if args.dry_run:
         print("(--dry-run のためメール送信・state保存はスキップしました)", file=sys.stderr)
         return
-
-    if new_slots:
-        from notifier import send_new_slot_email
-
-        urls = {t.get("name", t["municipality"]): t["reservation_url"] for t in config["targets"]}
-        send_new_slot_email(new_slots, urls)
-        print("通知メールを送信しました", file=sys.stderr)
 
     save_state(current_keys)
 
