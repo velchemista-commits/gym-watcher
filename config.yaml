@@ -28,6 +28,15 @@ targets:
     always_notify_block_indexes: []
     facility_filters: ["大体育室全面", "小体育室"]   # 荒川総合スポーツセンターのみ
 
+  - municipality: katsushika
+    name: 葛飾区
+    reservation_url: "https://rsv.shisetsu.city.katsushika.lg.jp/katsushika/web/"
+    sport_code: "バレーボール"     # 利用目的名(館ごとの例外は scrapers/katsushika.py)
+    # 時間枠は館ごとに異なる(奥戸=4枠、水元=5枠)ため画面から読み取る
+    # 対象は 奥戸体育館の大体育室全面 / エイトホール / 水元のメインアリーナ全面
+    min_consecutive_blocks: 2
+    always_notify_block_indexes: []
+
   - municipality: ichikawa
     name: 市川市
     reservation_url: "https://reserve.city.ichikawa.lg.jp/"

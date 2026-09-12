@@ -15,10 +15,16 @@ from zoneinfo import ZoneInfo
 import jpholiday
 import yaml
 
-from scrapers import arakawa, ichikawa, koto, ome
+from scrapers import arakawa, ichikawa, katsushika, koto, ome
 from scrapers.base import Slot
 
-SCRAPERS = {"ome": ome, "koto": koto, "arakawa": arakawa, "ichikawa": ichikawa}
+SCRAPERS = {
+    "ome": ome,
+    "koto": koto,
+    "arakawa": arakawa,
+    "ichikawa": ichikawa,
+    "katsushika": katsushika,
+}
 
 ROOT = Path(__file__).parent
 CONFIG_PATH = ROOT / "config.yaml"
