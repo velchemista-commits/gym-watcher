@@ -15,7 +15,7 @@ from zoneinfo import ZoneInfo
 import jpholiday
 import yaml
 
-from scrapers import arakawa, ichikawa, katsushika, koto, ome
+from scrapers import arakawa, ichikawa, katsushika, koto, matsudo, ome
 from scrapers.base import Slot
 
 SCRAPERS = {
@@ -24,6 +24,7 @@ SCRAPERS = {
     "arakawa": arakawa,
     "ichikawa": ichikawa,
     "katsushika": katsushika,
+    "matsudo": matsudo,
 }
 
 ROOT = Path(__file__).parent

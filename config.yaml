@@ -37,6 +37,16 @@ targets:
     min_consecutive_blocks: 2
     always_notify_block_indexes: []
 
+  - municipality: matsudo
+    name: 松戸市
+    reservation_url: "https://yoyaku.city.matsudo.chiba.jp/web/"
+    sport_code: "2000_2040"       # バレーボール
+    # 1日6枠(2時間単位): 9-11 / 11-13 / 13-15 / 15-17 / 17-19 / 19-21
+    # 対象は小金原・柿ノ木台・常盤平・松戸運動公園の体育館の「全面」のみ
+    # (scrapers/matsudo.py の TARGET_ROOMS で指定)
+    min_consecutive_blocks: 2
+    always_notify_block_indexes: []
+
   - municipality: ichikawa
     name: 市川市
     reservation_url: "https://reserve.city.ichikawa.lg.jp/"
