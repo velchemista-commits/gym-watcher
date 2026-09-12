@@ -15,10 +15,10 @@ from zoneinfo import ZoneInfo
 import jpholiday
 import yaml
 
-from scrapers import koto, ome
+from scrapers import arakawa, koto, ome
 from scrapers.base import Slot
 
-SCRAPERS = {"ome": ome, "koto": koto}
+SCRAPERS = {"ome": ome, "koto": koto, "arakawa": arakawa}
 
 ROOT = Path(__file__).parent
 CONFIG_PATH = ROOT / "config.yaml"
@@ -97,6 +97,7 @@ def collect_current_slots(config: dict) -> list[Slot]:
                 target["sport_code"],
                 target.get("min_consecutive_blocks", scraper.DEFAULT_MIN_CONSECUTIVE),
                 target.get("always_notify_block_indexes", scraper.DEFAULT_ALWAYS_NOTIFY_INDEXES),
+                target.get("facility_filters", ()),
             )
         except Exception as e:
             # 1自治体が落ちても他の自治体の通知は続ける

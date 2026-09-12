@@ -1,6 +1,7 @@
 # 監視対象の自治体一覧
 # min_consecutive_blocks:       この枠数以上連続して空いている場合に通知
 # always_notify_block_indexes:  1枠だけでも通知したい枠(0始まりの番号)
+# facility_filters:             施設名にこの文字列を含む施設だけを対象にする(省略時は全施設)
 targets:
   - municipality: ome
     name: 青梅市
@@ -17,6 +18,15 @@ targets:
     # 1日3枠: 9-12 / 13-17 / 18-21:30
     min_consecutive_blocks: 2
     always_notify_block_indexes: [1]   # 13:00-17:00 は1枠でも通知
+
+  - municipality: arakawa
+    name: 荒川区
+    reservation_url: "https://shisetsu.city.arakawa.tokyo.jp/stagia/reserve/gin_menu"
+    sport_code: "250"             # バレーボール
+    # 1日4枠: 9-12 / 12:30-15 / 15:30-18 / 18:30-21:30
+    min_consecutive_blocks: 2
+    always_notify_block_indexes: []
+    facility_filters: ["大体育室全面", "小体育室"]   # 荒川総合スポーツセンターのみ
 
 # 対象曜日: 土日祝のみ空きをチェックする
 target_weekdays:

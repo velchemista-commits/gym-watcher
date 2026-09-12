@@ -18,7 +18,7 @@ from __future__ import annotations
 import re
 import sys
 import time
-from typing import Iterable, List, Optional
+from typing import Iterable, List, Optional, Sequence
 
 from bs4 import BeautifulSoup
 from playwright.sync_api import Page, sync_playwright
@@ -56,6 +56,7 @@ def fetch_all_slots(
     mokuteki_code: str = MOKUTEKI_VOLLEYBALL,
     min_consecutive: int = DEFAULT_MIN_CONSECUTIVE,
     always_notify_indexes: Iterable[int] = DEFAULT_ALWAYS_NOTIFY_INDEXES,
+    facility_filters: Sequence[str] = (),
 ) -> List[Slot]:
     """target_dates(YYYYMMDDの集合)に含まれる日だけ空き(○/●)スロットを取得する。
 
@@ -94,7 +95,11 @@ def fetch_all_slots(
                 if current in target_set:
                     slots.extend(
                         _parse_slots(
-                            page.content(), current, min_consecutive, always_notify_indexes
+                            page.content(),
+                            current,
+                            min_consecutive,
+                            always_notify_indexes,
+                            facility_filters,
                         )
                     )
                 if current == last_target:
@@ -146,6 +151,7 @@ def _parse_slots(
     date_str: str,
     min_consecutive: int = DEFAULT_MIN_CONSECUTIVE,
     always_notify_indexes: Iterable[int] = DEFAULT_ALWAYS_NOTIFY_INDEXES,
+    facility_filters: Sequence[str] = (),
 ) -> List[Slot]:
     soup = BeautifulSoup(html, "html.parser")
     slots: List[Slot] = []
@@ -165,6 +171,8 @@ def _parse_slots(
             facility_raw = name_cell.get_text(separator=" ", strip=True)
             facility_name = facility_raw.split("(")[0].strip()
             facility = f"{group_name} {facility_name}".strip()
+            if facility_filters and not any(f in facility for f in facility_filters):
+                continue
 
             data_cells = table.select("td")[1:]
             available = [cell.get_text(strip=True) in AVAILABLE_MARKS for cell in data_cells]
