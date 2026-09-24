@@ -11,8 +11,10 @@ targets:
     # 1日6枠: 9-12 / 12-13 / 13-15 / 15-17 / 17-19 / 19-21
     min_consecutive_blocks: 3
     always_notify_block_indexes: []
-    # 天ヶ瀬体育館は分割面(1/2A・1/2B)を除外し、全面のみ通知する
-    facility_excludes: ["瀬体育館1/2"]
+    # 天ヶ瀬体育館の「全面」のみ通知する(他の市民センター・分割面は対象外)。
+    # 全面は「天ケ瀬」、分割面は「天ヶ瀬」と表記のケ/ヶが揺れているため、
+    # 「瀬」以降で判定する
+    facility_filters: ["瀬体育館全面"]
 
   - municipality: koto
     name: 江東区
@@ -21,6 +23,8 @@ targets:
     # 1日3枠: 9-12 / 13-17 / 18-21:30
     min_consecutive_blocks: 2
     always_notify_block_indexes: [1]   # 13:00-17:00 は1枠でも通知
+    # 「全面」の体育室のみ通知する(半面・小体育室は対象外)
+    facility_filters: ["全面"]
 
   - municipality: arakawa
     name: 荒川区
